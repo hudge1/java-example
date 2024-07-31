@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    
+    environment {
+        TOMCAT_USER = 'ec2-user'
+        TOMCAT_HOST = '52.66.8.70'
+        TOMCAT_PATH = '/home/ec2-usser/tomcat/webapps/'
+        ARTIFACT_NAME = 'works-with-heroku-1.0.war'
+    }
+    
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                // Assuming Maven is used
+                sh 'mvn clean package'
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    def artifactPath = "target/${env.ARTIFACT_NAME}"
+                    
+                    echo "Deploying ${artifactPath} to ${env.TOMCAT_HOST}..."
+                    
+                    // Deploy artifact using rsync
+                    sh """
+                    rsync -avz --delete ${artifactPath} ${env.TOMCAT_USER}@${env.TOMCAT_HOST}:${env.TOMCAT_PATH}
+                    """
+                }
+            }
+        }
+        
+        stage('Restart Tomcat') {
+            steps {
+                script {
+                    echo "Restarting Tomcat on ${env.TOMCAT_HOST}..."
+                    
+                    // Restart Tomcat (Optional)
+                    sh """
+                    ssh ${env.TOMCAT_USER}@${env.TOMCAT_HOST} 'sudo systemctl restart tomcat'
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline execution finished.'
+        }
+    }
+}
