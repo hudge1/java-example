@@ -4,7 +4,7 @@ pipeline {
 		stage('Checkout') {
 			agent {label 'master'}
 			steps {
-				git branch: 'main', url: 'https://github.com/sudheer76R/java-example.git'
+				git branch: 'main', url: 'https://github.com/hudge1/java-example.git'
 			}
 		}
 		stage('Static-test') {
@@ -27,7 +27,7 @@ pipeline {
 		    agent {label 'tomcatsp'}
 			steps {
 				echo 'Deploying into Dev environment'
-				sh 'sudo cp -r /home/ubuntu/*.war /opt/tomcat/apache-tomcat-9.0.68/webapps/'
+				sh 'sudo cp -r /home/ubuntu/*.war /home/ec2-user/tomcat/webapps/'
 				sh 'sudo rm -rf /home/ubuntu/*.war'
 			}
 		}
