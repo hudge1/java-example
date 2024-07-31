@@ -1,0 +1,35 @@
+pipeline {
+	agent none
+	stages {
+		stage('Checkout') {
+			agent {label 'master'}
+			steps {
+				git branch: 'main', url: 'https://github.com/sudheer76R/java-example.git'
+			}
+		}
+		stage('Static-test') {
+			agent {label 'master'}
+			steps {
+				echo 'Running static tests on code'
+			}
+		}
+		stage('Build') {
+		    environment {
+                private_key=credentials('ssh_key')
+            }
+			agent {label 'master'}
+			steps {
+				sh 'mvn clean package'
+				sh 'rsync -avzh -e "ssh -i ${private_key} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" $WORKSPACE/target/*.war ubuntu@13.234.115.8:/home/ubuntu'
+			}
+		}
+		stage('Deploy') {
+		    agent {label 'tomcatsp'}
+			steps {
+				echo 'Deploying into Dev environment'
+				sh 'sudo cp -r /home/ubuntu/*.war /opt/tomcat/apache-tomcat-9.0.68/webapps/'
+				sh 'sudo rm -rf /home/ubuntu/*.war'
+			}
+		}
+	}
+}
